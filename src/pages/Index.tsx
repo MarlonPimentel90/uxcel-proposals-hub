@@ -5,6 +5,7 @@ import { Dashboard } from "@/components/Dashboard";
 import { ProposalsTable } from "@/components/ProposalsTable";
 import { ProposalDialog } from "@/components/ProposalDialog";
 import { Proposal, ProposalStatus } from "@/types/proposal";
+import logo from "@/assets/logo.png";
 
 const Index = () => {
   const [proposals, setProposals] = useState<Proposal[]>([
@@ -84,13 +85,16 @@ const Index = () => {
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Controle de Propostas
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Gerenciamento de projetos complementares de engenharia
-              </p>
+            <div className="flex items-center gap-4">
+              <img src={logo} alt="Complementare Logo" className="h-12 w-auto" />
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">
+                  Controle de Propostas
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Gerenciamento de projetos complementares de engenharia
+                </p>
+              </div>
             </div>
             <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
