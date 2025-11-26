@@ -48,17 +48,17 @@ export const ProposalsTable = ({
       pending: {
         label: "Aguardando",
         variant: "outline" as const,
-        className: "border-warning text-warning",
+        className: "border-alert-attention bg-alert-attention/10 text-alert-attention font-medium",
       },
       approved: {
         label: "Aprovada",
         variant: "outline" as const,
-        className: "border-success text-success",
+        className: "border-success bg-success/10 text-success font-medium",
       },
       rejected: {
         label: "Recusada",
         variant: "outline" as const,
-        className: "border-destructive text-destructive",
+        className: "border-destructive bg-destructive/10 text-destructive font-medium",
       },
     };
 
@@ -162,18 +162,18 @@ export const ProposalsTable = ({
           </div>
         </div>
 
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Data de Envio</TableHead>
-                <TableHead>Valor</TableHead>
+              <TableRow className="bg-table-header hover:bg-table-header border-b-0">
+                <TableHead className="text-table-header-foreground font-semibold">Cliente</TableHead>
+                <TableHead className="text-table-header-foreground font-semibold">Data de Envio</TableHead>
+                <TableHead className="text-table-header-foreground font-semibold">Valor</TableHead>
                 <TableHead>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 gap-1 px-2"
+                    className="h-8 gap-1 px-2 text-table-header-foreground hover:text-table-header-foreground hover:bg-table-header-foreground/10 font-semibold"
                     onClick={() => handleSort("status")}
                   >
                     Status
@@ -184,7 +184,7 @@ export const ProposalsTable = ({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 gap-1 px-2"
+                    className="h-8 gap-1 px-2 text-table-header-foreground hover:text-table-header-foreground hover:bg-table-header-foreground/10 font-semibold"
                     onClick={() => handleSort("lastFollowUp")}
                   >
                     Último Follow-up
@@ -195,14 +195,14 @@ export const ProposalsTable = ({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 gap-1 px-2"
+                    className="h-8 gap-1 px-2 text-table-header-foreground hover:text-table-header-foreground hover:bg-table-header-foreground/10 font-semibold"
                     onClick={() => handleSort("expectedReturnDate")}
                   >
                     Previsão de Retorno
                     <ArrowUpDown className="h-3 w-3" />
                   </Button>
                 </TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="text-right text-table-header-foreground font-semibold">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -222,25 +222,25 @@ export const ProposalsTable = ({
                   
                   let rowClassName = "";
                   if (isOverdue) {
-                    rowClassName = "bg-destructive/5 hover:bg-destructive/10";
+                    rowClassName = "bg-alert-overdue/5 hover:bg-alert-overdue/10 border-l-4 border-l-alert-overdue";
                   } else if (isSoon) {
-                    rowClassName = "bg-warning/5 hover:bg-warning/10";
+                    rowClassName = "bg-alert-soon/5 hover:bg-alert-soon/10 border-l-4 border-l-alert-soon";
                   } else if (needsAlert) {
-                    rowClassName = "bg-muted/30 hover:bg-muted/50";
+                    rowClassName = "bg-alert-attention/5 hover:bg-alert-attention/10 border-l-2 border-l-alert-attention";
                   }
 
                   return (
                     <TableRow key={proposal.id} className={rowClassName}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          {(needsAlert || isOverdue || isSoon) && (
-                            <AlertCircle
-                              className={`h-4 w-4 ${
-                                isOverdue
-                                  ? "text-destructive"
-                                  : "text-warning"
-                              }`}
-                            />
+                          {isOverdue && (
+                            <AlertCircle className="h-4 w-4 text-alert-overdue" />
+                          )}
+                          {isSoon && !isOverdue && (
+                            <AlertCircle className="h-4 w-4 text-alert-soon" />
+                          )}
+                          {needsAlert && !isOverdue && !isSoon && (
+                            <AlertCircle className="h-4 w-4 text-alert-attention" />
                           )}
                           {proposal.clientName}
                         </div>
@@ -252,10 +252,12 @@ export const ProposalsTable = ({
                       <TableCell>{getStatusBadge(proposal.status)}</TableCell>
                       <TableCell>
                         <div>
-                          <p>{formatDate(proposal.lastFollowUp)}</p>
+                          <p className={needsAlert ? "font-medium" : ""}>
+                            {formatDate(proposal.lastFollowUp)}
+                          </p>
                           {needsAlert && (
-                            <p className="text-xs text-warning mt-1">
-                              Há {getDaysSinceFollowUp(proposal.lastFollowUp)} dias
+                            <p className="text-xs text-alert-attention mt-1 font-medium italic">
+                              Há {getDaysSinceFollowUp(proposal.lastFollowUp)} dias sem follow-up
                             </p>
                           )}
                         </div>
@@ -263,20 +265,22 @@ export const ProposalsTable = ({
                       <TableCell>
                         {proposal.expectedReturnDate ? (
                           <div>
-                            <p>{formatDate(proposal.expectedReturnDate)}</p>
+                            <p className={isOverdue || isSoon ? "font-semibold" : ""}>
+                              {formatDate(proposal.expectedReturnDate)}
+                            </p>
                             {isOverdue && (
-                              <p className="text-xs text-destructive mt-1 font-medium">
-                                Vencido há {Math.abs(getDaysUntilReturn(proposal.expectedReturnDate)!)} dias
+                              <p className="text-xs text-alert-overdue mt-1 font-bold">
+                                ⚠ Vencido há {Math.abs(getDaysUntilReturn(proposal.expectedReturnDate)!)} dias
                               </p>
                             )}
                             {isSoon && !isOverdue && (
-                              <p className="text-xs text-warning mt-1 font-medium">
-                                Em {getDaysUntilReturn(proposal.expectedReturnDate)} dias
+                              <p className="text-xs text-alert-soon mt-1 font-semibold">
+                                📅 Em {getDaysUntilReturn(proposal.expectedReturnDate)} dias
                               </p>
                             )}
                           </div>
                         ) : (
-                          <span className="text-muted-foreground">-</span>
+                          <span className="text-muted-foreground italic text-sm">Não definida</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -285,6 +289,7 @@ export const ProposalsTable = ({
                             variant="ghost"
                             size="icon"
                             onClick={() => onEdit(proposal)}
+                            className="hover:bg-primary/10 hover:text-primary"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -292,8 +297,9 @@ export const ProposalsTable = ({
                             variant="ghost"
                             size="icon"
                             onClick={() => setDeleteId(proposal.id)}
+                            className="hover:bg-destructive/10 hover:text-destructive"
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>

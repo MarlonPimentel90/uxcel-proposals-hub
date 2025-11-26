@@ -43,8 +43,8 @@ export const Dashboard = ({ proposals }: DashboardProps) => {
       title: "Aguardando",
       value: pendingProposals,
       icon: Clock,
-      color: "text-warning",
-      bgColor: "bg-warning/10",
+      color: "text-alert-attention",
+      bgColor: "bg-alert-attention/10",
     },
   ];
 

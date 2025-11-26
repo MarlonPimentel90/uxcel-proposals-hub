@@ -96,7 +96,7 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
+            <Button onClick={() => setIsDialogOpen(true)} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md">
               <Plus className="h-4 w-4" />
               Nova Proposta
             </Button>
