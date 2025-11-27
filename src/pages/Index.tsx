@@ -1,73 +1,126 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Dashboard } from "@/components/Dashboard";
 import { ProposalsTable } from "@/components/ProposalsTable";
 import { ProposalDialog } from "@/components/ProposalDialog";
-import { Proposal, ProposalStatus } from "@/types/proposal";
+import { Proposal } from "@/types/proposal";
 import logo from "@/assets/logo.png";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner"; // Usado para avisos visuais
 
 const Index = () => {
-  const [proposals, setProposals] = useState<Proposal[]>([
-    {
-      id: "1",
-      clientName: "Construtora Silva & Cia",
-      sentDate: new Date("2025-02-15"),
-      value: 85000,
-      status: "pending",
-      lastFollowUp: new Date("2025-02-20"),
-      expectedReturnDate: new Date("2025-03-01"),
-      notes: "Cliente solicitou ajustes no cronograma",
-    },
-    {
-      id: "2",
-      clientName: "Empreendimentos Costa",
-      sentDate: new Date("2025-02-10"),
-      value: 42000,
-      status: "approved",
-      lastFollowUp: new Date("2025-02-18"),
-      expectedReturnDate: new Date("2025-02-25"),
-      notes: "Proposta aprovada, aguardando contrato",
-    },
-    {
-      id: "3",
-      clientName: "Incorporadora Horizonte",
-      sentDate: new Date("2025-01-28"),
-      value: 68000,
-      status: "rejected",
-      lastFollowUp: new Date("2025-02-05"),
-      expectedReturnDate: new Date("2025-02-15"),
-      notes: "Cliente escolheu outra empresa",
-    },
-    {
-      id: "4",
-      clientName: "Residencial Park View",
-      sentDate: new Date("2025-02-01"),
-      value: 25000,
-      status: "pending",
-      lastFollowUp: new Date("2025-02-08"),
-      expectedReturnDate: new Date("2025-11-28"),
-      notes: "Aguardando análise do comitê",
-    },
-  ]);
+  // 1. Começamos com uma lista vazia, esperando os dados do banco
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProposal, setEditingProposal] = useState<Proposal | undefined>();
 
-  const handleAddProposal = (proposal: Omit<Proposal, "id">) => {
-    const newProposal: Proposal = {
-      ...proposal,
-      id: Date.now().toString(),
-    };
-    setProposals([newProposal, ...proposals]);
+  // 2. Esta função vai no Supabase e busca os dados reais
+  const fetchProposals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('proposals')
+        .select('*')
+        .order('sent_date', { ascending: false });
+
+      if (error) throw error;
+
+      // Tradutor: Converte do formato do Banco (client_name) para o Site (clientName)
+      const formattedProposals: Proposal[] = data.map((p: any) => ({
+        id: p.id,
+        clientName: p.client_name,
+        sentDate: new Date(p.sent_date),
+        value: Number(p.value),
+        status: p.status,
+        lastFollowUp: p.last_follow_up ? new Date(p.last_follow_up) : undefined,
+        expectedReturnDate: p.expected_return_date ? new Date(p.expected_return_date) : undefined,
+        notes: p.notes
+      }));
+
+      setProposals(formattedProposals);
+    } catch (error) {
+      console.error("Erro ao buscar propostas:", error);
+      toast.error("Erro ao carregar as propostas.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleEditProposal = (proposal: Proposal) => {
-    setProposals(proposals.map((p) => (p.id === proposal.id ? proposal : p)));
+  // Carrega os dados assim que a tela abre
+  useEffect(() => {
+    fetchProposals();
+  }, []);
+
+  // 3. Função para SALVAR (Criar nova)
+  const handleAddProposal = async (proposal: Omit<Proposal, "id">) => {
+    try {
+      // Tradutor inverso: Do Site para o Banco
+      const { error } = await supabase.from('proposals').insert({
+        client_name: proposal.clientName,
+        sent_date: proposal.sentDate.toISOString(),
+        value: proposal.value,
+        status: proposal.status,
+        last_follow_up: proposal.lastFollowUp?.toISOString(),
+        expected_return_date: proposal.expectedReturnDate?.toISOString(),
+        notes: proposal.notes
+      });
+
+      if (error) throw error;
+
+      toast.success("Proposta criada com sucesso!");
+      fetchProposals(); // Atualiza a lista na tela
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Erro ao criar:", error);
+      toast.error("Erro ao salvar a proposta.");
+    }
   };
 
-  const handleDeleteProposal = (id: string) => {
-    setProposals(proposals.filter((p) => p.id !== id));
+  // 4. Função para EDITAR
+  const handleEditProposal = async (proposal: Proposal) => {
+    try {
+      const { error } = await supabase
+        .from('proposals')
+        .update({
+          client_name: proposal.clientName,
+          sent_date: proposal.sentDate.toISOString(),
+          value: proposal.value,
+          status: proposal.status,
+          last_follow_up: proposal.lastFollowUp?.toISOString(),
+          expected_return_date: proposal.expectedReturnDate?.toISOString(),
+          notes: proposal.notes
+        })
+        .eq('id', proposal.id);
+
+      if (error) throw error;
+
+      toast.success("Proposta atualizada!");
+      fetchProposals();
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Erro ao atualizar:", error);
+      toast.error("Erro ao atualizar a proposta.");
+    }
+  };
+
+  // 5. Função para DELETAR
+  const handleDeleteProposal = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('proposals')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success("Proposta excluída.");
+      fetchProposals();
+    } catch (error) {
+      console.error("Erro ao deletar:", error);
+      toast.error("Erro ao excluir.");
+    }
   };
 
   const openEditDialog = (proposal: Proposal) => {
@@ -105,12 +158,21 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-6 py-8 space-y-8">
-        <Dashboard proposals={proposals} />
-        <ProposalsTable
-          proposals={proposals}
-          onEdit={openEditDialog}
-          onDelete={handleDeleteProposal}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2">Carregando dados do sistema...</span>
+          </div>
+        ) : (
+          <>
+            <Dashboard proposals={proposals} />
+            <ProposalsTable
+              proposals={proposals}
+              onEdit={openEditDialog}
+              onDelete={handleDeleteProposal}
+            />
+          </>
+        )}
       </main>
 
       <ProposalDialog
