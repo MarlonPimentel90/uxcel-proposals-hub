@@ -6,6 +6,7 @@ export interface Proposal {
   sentDate: Date;
   value: number;
   status: ProposalStatus;
+  sentVia?: string; // Novo campo adicionado aqui
   lastFollowUp: Date;
   expectedReturnDate?: Date;
   notes: string;
