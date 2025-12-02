@@ -34,6 +34,7 @@ const Index = () => {
         sentDate: new Date(p.sent_date),
         value: Number(p.value),
         status: p.status,
+        sentVia: p.sent_via, // <--- LINHA NOVA: Mapeia a coluna do banco para o site
         lastFollowUp: p.last_follow_up ? new Date(p.last_follow_up) : undefined,
         expectedReturnDate: p.expected_return_date ? new Date(p.expected_return_date) : undefined,
         notes: p.notes
@@ -62,6 +63,7 @@ const Index = () => {
         sent_date: proposal.sentDate.toISOString(),
         value: proposal.value,
         status: proposal.status,
+        sent_via: proposal.sentVia, // <--- LINHA NOVA: Envia o dado para o banco
         last_follow_up: proposal.lastFollowUp?.toISOString(),
         expected_return_date: proposal.expectedReturnDate?.toISOString(),
         notes: proposal.notes
@@ -88,6 +90,7 @@ const Index = () => {
           sent_date: proposal.sentDate.toISOString(),
           value: proposal.value,
           status: proposal.status,
+          sent_via: proposal.sentVia, // <--- LINHA NOVA: Atualiza o dado no banco
           last_follow_up: proposal.lastFollowUp?.toISOString(),
           expected_return_date: proposal.expectedReturnDate?.toISOString(),
           notes: proposal.notes
